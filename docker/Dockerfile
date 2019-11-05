@@ -5,7 +5,7 @@ ENV CATKIN_WS=/root/catkin_ws
 
       # set up thread number for building
 RUN   if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; \
-      else export USE_PROC=$(($(nproc)/2)) ; fi && \
+      else export USE_PROC=1 ; fi && \
       apt-get update && apt-get install -y \
       cmake \
       libatlas-base-dev \
@@ -21,10 +21,11 @@ RUN   if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; \
       # Build and install Ceres
       git clone https://ceres-solver.googlesource.com/ceres-solver && \
       cd ceres-solver && \
-      git checkout tags/${CERES_VERSION} && \
+      git checkout tags/${CERES_VERSION}
+RUN   cd ceres-solver && \
       mkdir build && cd build && \
       cmake .. && \
-      make -j$(USE_PROC) install && \
+      make -j1 -l 1.0 install && \
       rm -rf ../../ceres-solver && \
       mkdir -p $CATKIN_WS/src/VINS-Mono/
 
@@ -41,6 +42,7 @@ RUN catkin config \
       --extend /opt/ros/$ROS_DISTRO \
       --cmake-args \
         -DCMAKE_BUILD_TYPE=Release && \
-    catkin build && \
+    catkin build -j2 && \
     sed -i '/exec "$@"/i \
             source "/root/catkin_ws/devel/setup.bash"' /ros_entrypoint.sh
+RUN echo "source /root/catkin_ws/devel/setup.bash" >> /root/.bashrc
